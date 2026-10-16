@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Správa Skladu</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+        .sekcia { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: inline-block; width: 120px; font-weight: bold; }
+        input { padding: 5px; width: 200px; }
+        button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .tlacidlo-zmazat { background-color: #dc3545; padding: 5px 10px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        a { text-decoration: none; color: #007bff; font-weight: bold; }
+        .chyba { color: red; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <p><a href="/">← Späť do obchodu</a></p>
+    <h1>⚙️ Admin Panel - Správa Skladu</h1>
+
+    {% if not prihlaseny %}
+        <div class="sekcia" style="max-width: 400px;">
+            <h2>Prihlásenie</h2>
+            {% if chyba %}
+                <p class="chyba">{{ chyba }}</p>
+            {% endif %}
+            <form action="/admin" method="post">
+                <div class="form-group">
+                    <label for="heslo">Heslo:</label>
+                    <input type="password" id="heslo" name="heslo" required autofocus placeholder="Zadaj heslo">
+                </div>
+                <button type="submit">Vstúpiť</button>
+            </form>
+        </div>
+    {% else %}
+        <div class="sekcia">
+            <h2>Pridať alebo doplniť tovar</h2>
+            <form action="/admin/pridat-tovar" method="post">
+                <input type="hidden" name="heslo" value="{{ heslo }}">
+
+                <div class="form-group">
+                    <label for="nazov">Názov tovaru:</label>
+                    <input type="text" id="nazov" name="nazov" required placeholder="napr. mlieko">
+                </div>
+                <div class="form-group">
+                    <label for="cena">Cena (€):</label>
+                    <input type="number" id="cena" name="cena" step="0.01" min="0.01" required placeholder="napr. 1.20">
+                </div>
+                <div class="form-group">
+                    <label for="pocet">Počet kusov:</label>
+                    <input type="number" id="pocet" name="pocet" min="1" required placeholder="napr. 10">
+                </div>
+                <button type="submit">Uložiť do skladu</button>
+            </form>
+        </div>
+
+        <div class="sekcia">
+            <h2>Aktuálny stav na sklade</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Názov tovaru</th>
+                        <th>Cena za kus</th>
+                        <th>Počet na sklade</th>
+                        <th>Stav</th>
+                        <th>Akcia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nazov, info in sklad.items() %}
+                    <tr>
+                        <td><strong>{{ nazov|capitalize }}</strong></td>
+                        <td>{{ info.cena }} €</td>
+                        <td>{{ info.pocet }} ks</td>
+                        <td>
+                            {% if info.pocet > 0 %}
+                                <span style="color: green;">Na sklade</span>
+                            {% else %}
+                                <span style="color: red; font-weight: bold;">Vypredané</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="/admin/zmazat-tovar" method="post" style="margin: 0;">
+                                <input type="hidden" name="heslo" value="{{ heslo }}">
+                                <input type="hidden" name="nazov" value="{{ nazov }}">
+                                <button type="submit" class="tlacidlo-zmazat" onclick="return confirm('Naozaj chceš odstrániť {{ nazov }} zo skladu?');">
+                                    Odstrániť
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+</body>
+</html>

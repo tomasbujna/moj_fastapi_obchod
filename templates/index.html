@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>Webový Obchod</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+        .sekcia { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 6px 12px; cursor: pointer; margin-right: 5px; }
+        .tlacidlo-zaplatit { background-color: #28a745; color: white; border: none; font-weight: bold; }
+        .tlacidlo-zrusit { background-color: #dc3545; color: white; border: none; }
+        .tlacidlo-odobrat { background-color: #ffc107; border: none; padding: 3px 8px; font-weight: bold; }
+        .tlacidlo-zmazat-polozku { background-color: #dc3545; color: white; border: none; padding: 3px 8px; }
+        .kosik-riadok { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: right;">
+        <a href="/admin" style="font-weight: bold; text-decoration: none;">⚙️ Admin Panel</a>
+    </div>
+
+    <h1>Vitaj v obchode!</h1>
+
+    <!-- PONUKA TOVARU -->
+    <div class="sekcia">
+        <h2>Dostupný tovar</h2>
+        <ul>
+            {% for nazov, info in sklad.items() %}
+                <li>
+                    <strong>{{ nazov|capitalize }}</strong>: {{ info.cena }}€ 
+                    (na sklade: {{ info.pocet }} ks)
+                    {% if info.pocet > 0 %}
+                        <form action="/pridat" method="post" style="display:inline;">
+                            <input type="hidden" name="tovar" value="{{ nazov }}">
+                            <button type="submit">Pridať do košíka</button>
+                        </form>
+                    {% else %}
+                        <em>(Vypredané)</em>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- KOŠÍK A ZHRNUTIE -->
+    <div class="sekcia">
+        <h2>Nákupný košík</h2>
+        {% if kosik %}
+            <div style="margin-bottom: 15px;">
+                {% for polozka, pocet in kosik_spocitany.items() %}
+                    <div class="kosik-riadok">
+                        <span><strong>{{ polozka|capitalize }}</strong> ({{ pocet }} ks) — {{ (sklad[polozka].cena * pocet)|round(2) }}€</span>
+                        
+                        <form action="/odobrat-jeden" method="post" style="display:inline;">
+                            <input type="hidden" name="tovar" value="{{ polozka }}">
+                            <button type="submit" class="tlacidlo-odobrat" title="Odobrať 1 ks">-1 ks</button>
+                        </form>
+
+                        <form action="/odobrat-vsetky" method="post" style="display:inline;">
+                            <input type="hidden" name="tovar" value="{{ polozka }}">
+                            <button type="submit" class="tlacidlo-zmazat-polozku" title="Odobrať všetky ks">Odstrániť</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <form action="/zlavovy-kupon" method="post" style="margin-bottom: 15px;">
+                <label for="kupon">Zľavový kupón (ZLAVA10 / ZLAVA20):</label>
+                <input type="text" id="kupon" name="kupon" value="{{ kupon }}">
+                <button type="submit">Aplikovať kupón</button>
+            </form>
+
+            <hr>
+            <p><strong>Suma pred zľavou:</strong> {{ suma_pred_zlavou }}€</p>
+            <p><strong>Spolu k úhrade:</strong> {{ spolu_k_uhrade }}€</p>
+
+            <div style="display: flex; gap: 10px;">
+                <form action="/dokoncit-nakup" method="post">
+                    <button type="submit" class="tlacidlo-zaplatit">Zaplať a dokonči nákup</button>
+                </form>
+
+                <form action="/reset" method="post">
+                    <button type="submit" class="tlacidlo-zrusit">Vysypať celý košík</button>
+                </form>
+            </div>
+        {% else %}
+            <p>Košík je prázdny.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
